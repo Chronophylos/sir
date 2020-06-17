@@ -75,7 +75,7 @@ impl Sandbox for Main {
     }
 
     fn title(&self) -> String {
-        String::from("A cool application")
+        String::from("SiR Course List Generator")
     }
 
     fn update(&mut self, message: Self::Message) {
@@ -178,7 +178,7 @@ impl Sandbox for Main {
                         .push(
                             TextInput::new(
                                 &mut self.dest_path_input,
-                                "path to worksheet",
+                                "path to csv file",
                                 &self.dest_path_text,
                                 Message::DestPathInputChanged,
                             )
