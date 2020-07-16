@@ -88,24 +88,27 @@ where
 }
 
 pub fn write_course_list(path: &str, table: Table) -> Result<()> {
+    use csv::{StringRecord, WriterBuilder};
+
     ensure!(!path.is_empty(), "Path is not set");
 
     let expanded = shellexpand::full(path)
         .context("Could not expand path")?
         .into_owned();
 
-    let mut wtr = csv::Writer::from_path(expanded)?;
+    let mut wtr = WriterBuilder::new().from_path(expanded)?;
 
     wtr.write_record(&["Gruppe", "Kunden ID", "Name", "Telefon"])?;
 
     for key in table.keys() {
         for row in table.get(key).unwrap() {
-            wtr.write_record(&[
-                key,
-                &row[0].to_string(),
-                &row[2].to_string(),
-                &row[7].to_string(),
-            ])?;
+            let customer_id = row[0].to_string();
+            let name = row[2].to_string();
+            let telephone = row[7].to_string();
+
+            let record = StringRecord::from(vec![key, &customer_id, &name, &telephone]);
+
+            wtr.write_record(&record)?;
         }
     }
 
