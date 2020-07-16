@@ -2023,7 +2023,6 @@ dependencies = [
  "log",
  "ron",
  "serde",
- "serde_derive",
  "shellexpand",
 ]
 

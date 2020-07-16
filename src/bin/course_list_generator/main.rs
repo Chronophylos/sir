@@ -109,7 +109,7 @@ impl Sandbox for Main {
                     }
                 }
 
-                let table = match sir::read_course_list(
+                let mut table = match sir::read_course_list(
                     &self.src_path_text,
                     &self.src_sheet_text,
                     &self.src_column_text,
@@ -122,8 +122,9 @@ impl Sandbox for Main {
                     }
                 };
 
-                let groups = table.keys().count();
-                let participants = table.values().map(|v| v.len()).fold(0, |acc, x| acc + x);
+                table.sort();
+
+                let participants = table.len();
 
                 match sir::write_course_list(&self.dest_path_text, table) {
                     Ok(_) => {}
@@ -135,8 +136,8 @@ impl Sandbox for Main {
                 }
 
                 self.result_text = format!(
-                    "Found {} groups and {} participants.\nWrote result to {}",
-                    groups, participants, &self.dest_path_text
+                    "Found {} participants.\nWrote result to {}",
+                    participants, &self.dest_path_text
                 );
 
                 self.state = State::Result;

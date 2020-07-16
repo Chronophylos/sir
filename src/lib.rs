@@ -3,13 +3,38 @@
 use anyhow::{bail, ensure, Context, Result};
 use calamine::{DataType, Range};
 use log::info;
-use std::{collections::HashMap, path::Path};
+use serde::Serialize;
+use std::{cmp::Ordering, path::Path};
 
 pub mod preferences;
 
-pub type Table = HashMap<String, Vec<Vec<DataType>>>;
+#[derive(Debug, Serialize, Eq)]
+pub struct CourseEntry {
+    id: String,
+    group: String,
+    name: String,
+    telephone: String,
+}
 
-pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Table> {
+impl Ord for CourseEntry {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name.cmp(&other.name).then(self.id.cmp(&other.id))
+    }
+}
+
+impl PartialOrd for CourseEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for CourseEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.name.eq(&other.name) && self.id.eq(&other.id)
+    }
+}
+
+pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Vec<CourseEntry>> {
     ensure!(!path.is_empty(), "Path is not set");
     ensure!(!sheet_name.is_empty(), "Sheet name is not set");
     ensure!(!column.is_empty(), "Column is no set");
@@ -32,22 +57,25 @@ pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Ta
 
     let column = column_to_usize(column)?;
 
-    let map = range
+    let list = range
         .rows()
         // skip header
         .skip(30)
         // filter out empty rows
         .filter(|data| data[column].is_string())
         // sort rows into hashmap
-        .map(|data| (data[column].get_string().unwrap(), data))
-        .fold(HashMap::new(), |mut acc, (course, data)| {
-            let data: Vec<DataType> = data.into();
-            acc.entry(course.to_owned()).or_insert(Vec::new());
-            acc.entry(course.to_owned()).and_modify(|v| v.push(data));
-            acc
-        });
+        .map(|data| {
+            let group = data[column].get_string().unwrap().to_owned();
+            CourseEntry {
+                group,
+                id: data[0].to_string().into(),
+                name: data[2].to_string().into(),
+                telephone: data[7].to_string().into(),
+            }
+        })
+        .collect();
 
-    Ok(map)
+    Ok(list)
 }
 
 fn get_worksheet_range_xlsx<P>(path: P, sheet_name: &str) -> Result<Range<DataType>>
@@ -88,8 +116,8 @@ where
         .context("Could not find sheet")??)
 }
 
-pub fn write_course_list(path: &str, table: Table) -> Result<()> {
-    use csv::{StringRecord, WriterBuilder};
+pub fn write_course_list(path: &str, table: Vec<CourseEntry>) -> Result<()> {
+    use csv::WriterBuilder;
 
     ensure!(!path.is_empty(), "Path is not set");
 
@@ -99,20 +127,15 @@ pub fn write_course_list(path: &str, table: Table) -> Result<()> {
 
     info!("Wrinting course list to {}", expanded);
 
-    let mut wtr = WriterBuilder::new().from_path(expanded)?;
+    let mut wtr = WriterBuilder::new()
+        .has_headers(false)
+        .from_path(expanded)?;
 
     wtr.write_record(&["Gruppe", "Kunden ID", "Name", "Telefon"])?;
 
-    for key in table.keys() {
-        for row in table.get(key).unwrap() {
-            let customer_id = row[0].to_string();
-            let name = row[2].to_string();
-            let telephone = row[7].to_string();
-
-            let record = StringRecord::from(vec![key, &customer_id, &name, &telephone]);
-
-            wtr.write_record(&record)?;
-        }
+    for entry in table {
+        wtr.serialize(entry)
+            .context("Could not serialize CouseEntry")?;
     }
 
     wtr.flush()?;
