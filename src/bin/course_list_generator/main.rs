@@ -44,7 +44,7 @@ enum Message {
     DestPathInputChanged(String),
 
     GeneratePressed,
-    OkPressed,
+    BackPressed,
 }
 
 #[derive(Default)]
@@ -62,7 +62,7 @@ struct Main {
     dest_path_text: String,
 
     generate_button: button::State,
-    ok_button: button::State,
+    back_button: button::State,
 
     error_text: String,
     result_text: String,
@@ -136,13 +136,16 @@ impl Sandbox for Main {
                 }
 
                 self.result_text = format!(
-                    "Found {} participants.\nWrote result to {}",
+                    "Found {} participants. Wrote result to {}",
                     participants, &self.dest_path_text
                 );
 
                 self.state = State::Result;
             }
-            Message::OkPressed => self.state = State::Entry,
+            Message::BackPressed => match self.state {
+                State::Error | State::Result => self.state = State::Entry,
+                _ => {}
+            },
         }
     }
 
@@ -216,12 +219,23 @@ impl Sandbox for Main {
                         .on_press(Message::GeneratePressed),
                 ),
             State::Error => column
-                .push(Text::new(self.error_text.clone()).size(18))
+                .push(Row::new().push(Text::new(self.error_text.clone()).size(18)))
                 .push(Space::with_height(Length::Fill))
                 .push(
-                    Button::new(&mut self.ok_button, Text::new("Ok")).on_press(Message::OkPressed),
+                    Row::new().align_items(Align::Start).push(
+                        Button::new(&mut self.back_button, Text::new("Ok"))
+                            .on_press(Message::BackPressed),
+                    ),
                 ),
-            State::Result => column.push(Text::new(self.result_text.clone()).size(20)),
+            State::Result => column
+                .push(Row::new().push(Text::new(self.result_text.clone()).size(20)))
+                .push(Space::with_height(Length::Fill))
+                .push(
+                    Row::new().align_items(Align::Start).push(
+                        Button::new(&mut self.back_button, Text::new("Back"))
+                            .on_press(Message::BackPressed),
+                    ),
+                ),
         }
         .into()
     }
