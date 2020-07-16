@@ -1,12 +1,13 @@
-use anyhow::{ensure, Context, Result};
-use calamine::DataType;
+#![feature(or_patterns)]
+
+use anyhow::{bail, ensure, Context, Result};
+use calamine::{DataType, Range};
+use log::{debug, info};
 use std::{collections::HashMap, path::Path};
 
 pub type Table = HashMap<String, Vec<Vec<DataType>>>;
 
 pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Table> {
-    use calamine::{open_workbook, Reader, Xlsx};
-
     ensure!(!path.is_empty(), "Path is not set");
     ensure!(!sheet_name.is_empty(), "Sheet name is not set");
     ensure!(!column.is_empty(), "Column is no set");
@@ -19,16 +20,17 @@ pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Ta
         .canonicalize()
         .context("Could not canonicalize path")?;
 
-    let mut excel: Xlsx<_> =
-        open_workbook(path.to_str().context("Could not convert path to string")?)
-            .context("Could not open Workbook")?;
-
-    let range = excel
-        .worksheet_range(sheet_name)
-        .context("Could not find sheet")??;
+    let range = match path.extension().map(|oss| oss.to_str()).flatten() {
+        Some("xlsx" | "xlsm" | "xlam") => get_worksheet_range_xlsx(path, sheet_name),
+        Some("ods") => get_worksheet_range_ods(path, sheet_name),
+        None => bail!("File has no extension"),
+        _ => bail!("Unsupported file extension"),
+    }
+    .context("Could not read worksheet range")?;
 
     let column = column_to_usize(column)?;
 
+    debug!("Searching range");
     let map = range
         .rows()
         // skip header
@@ -45,6 +47,44 @@ pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Ta
         });
 
     Ok(map)
+}
+
+fn get_worksheet_range_xlsx<P>(path: P, sheet_name: &str) -> Result<Range<DataType>>
+where
+    P: AsRef<Path>,
+{
+    use calamine::{open_workbook, Reader, Xlsx};
+
+    let path = path.as_ref();
+
+    info!("Opening Workbook as Xlsx (path: {})", path.display());
+
+    let mut workbook: Xlsx<_> =
+        open_workbook(path.to_str().context("Could not convert path to string")?)
+            .context("Could not open Workbook")?;
+
+    Ok(workbook
+        .worksheet_range(sheet_name)
+        .context("Could not find sheet")??)
+}
+
+fn get_worksheet_range_ods<P>(path: P, sheet_name: &str) -> Result<Range<DataType>>
+where
+    P: AsRef<Path>,
+{
+    use calamine::{open_workbook, Ods, Reader};
+
+    let path = path.as_ref();
+
+    info!("Opening Workbook as Ods (path: {})", path.display());
+
+    let mut workbook: Ods<_> =
+        open_workbook(path.to_str().context("Could not convert path to string")?)
+            .context("Could not open Workbook")?;
+
+    Ok(workbook
+        .worksheet_range(sheet_name)
+        .context("Could not find sheet")??)
 }
 
 pub fn write_course_list(path: &str, table: Table) -> Result<()> {
