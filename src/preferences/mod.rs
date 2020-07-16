@@ -1,10 +1,11 @@
 use anyhow::{ensure, Context, Result};
+use directories::ProjectDirs;
 use ron::{de::from_reader, ser::to_writer};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::File,
     io::{BufReader, BufWriter},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -52,10 +53,23 @@ impl Default for Preferences {
     }
 }
 
+fn get_preferences_path() -> Result<PathBuf> {
+    let dirs =
+        ProjectDirs::from("com", "chronophylos", "sir").context("No valid home directory found")?;
+    Ok(dirs.config_dir().join("preferences.ron"))
+}
+
 pub fn load_preferences() -> Result<Preferences> {
-    todo!()
+    let path = get_preferences_path().context("Could not get path to preference file")?;
+
+    if !path.exists() {
+        return Ok(Preferences::default());
+    }
+
+    Preferences::from_path(path).context("Could not load prefernces")
 }
 
 pub fn store_preferences(prefs: Preferences) -> Result<()> {
-    todo!()
+    let path = get_preferences_path().context("Could not get path to preference file")?;
+    prefs.write(path).context("Could not store preferences")
 }
