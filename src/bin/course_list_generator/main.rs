@@ -3,11 +3,13 @@ use iced::{
     button, text_input, window, Align, Button, Column, Element, Length, Row, Sandbox, Settings,
     Space, Text, TextInput,
 };
+use log::info;
+use sir::preferences::{load_preferences, store_preferences, Preferences};
 
 fn main() -> Result<()> {
-    //let path = format!("{}/data/sir.xlsx", env!("CARGO_MANIFEST_DIR"));
-    //get_courses_participans(path)?;
+    env_logger::init();
 
+    info!("Runnging main view");
     Main::run(Settings {
         window: window::Settings {
             size: (900, 300),
@@ -20,6 +22,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Copy, Clone)]
 enum State {
     Entry,
     Error,
@@ -71,7 +74,14 @@ impl Sandbox for Main {
     type Message = Message;
 
     fn new() -> Self {
-        Self::default()
+        let prefs = load_preferences().unwrap();
+        Self {
+            src_path_text: prefs.src_path.to_string(),
+            src_sheet_text: prefs.src_sheet.to_string(),
+            src_column_text: prefs.src_column.to_string(),
+            dest_path_text: prefs.dest_path.to_string(),
+            ..Self::default()
+        }
     }
 
     fn title(&self) -> String {
@@ -85,6 +95,20 @@ impl Sandbox for Main {
             Message::SrcColumnInputChanged(s) => self.src_column_text = s,
             Message::DestPathInputChanged(s) => self.dest_path_text = s,
             Message::GeneratePressed => {
+                match store_preferences(Preferences {
+                    src_path: self.src_path_text.as_str().into(),
+                    src_sheet: self.src_sheet_text.as_str().into(),
+                    src_column: self.src_column_text.as_str().into(),
+                    dest_path: self.dest_path_text.as_str().into(),
+                }) {
+                    Ok(_) => {}
+                    Err(err) => {
+                        self.error_text = format!("Error storing preferences: {:?}", err);
+                        self.state = State::Error;
+                        return;
+                    }
+                }
+
                 let table = match sir::read_course_list(
                     &self.src_path_text,
                     &self.src_sheet_text,

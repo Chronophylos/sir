@@ -32,7 +32,6 @@ pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Ta
 
     let column = column_to_usize(column)?;
 
-    debug!("Searching range");
     let map = range
         .rows()
         // skip header
@@ -97,6 +96,8 @@ pub fn write_course_list(path: &str, table: Table) -> Result<()> {
     let expanded = shellexpand::full(path)
         .context("Could not expand path")?
         .into_owned();
+
+    info!("Wrinting course list to {}", expanded);
 
     let mut wtr = WriterBuilder::new().from_path(expanded)?;
 
