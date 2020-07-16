@@ -5,6 +5,8 @@ use calamine::{DataType, Range};
 use log::{debug, info};
 use std::{collections::HashMap, path::Path};
 
+pub mod preferences;
+
 pub type Table = HashMap<String, Vec<Vec<DataType>>>;
 
 pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Table> {
