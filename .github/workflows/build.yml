@@ -1,0 +1,70 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+jobs:
+  todos_linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hecrj/setup-rust-action@v1
+    - name: Install cargo-deb
+      run: cargo install cargo-deb
+    - uses: actions/checkout@master
+    - name: Enable Link Time Optimizations and Strip
+      run: |
+        echo "[profile.release]" >> Cargo.toml
+        echo "lto = true" >> Cargo.toml
+    - name: Build all binaries
+      run: cargo build --verbose --release --bins
+    - name: Archive course_list_generator binary
+      uses: actions/upload-artifact@v1
+      with:
+        name: course_list_generator-x86_64-unknown-linux-gnu
+        path: target/release/course_list_generator
+    - name: Pack .deb package
+      run: cargo deb --no-build
+    - name: Rename todos .deb package
+      run: mv target/debian/*.deb target/debian/sir-x86_64-debian-linux-gnu.deb
+    - name: Archive sir .deb package
+      uses: actions/upload-artifact@v1
+      with:
+        name: sir-x86_64-debian-linux-gnu
+        path: target/debian/sir-x86_64-debian-linux-gnu.deb
+
+  todos_windows:
+    runs-on: windows-latest
+    steps:
+    - uses: hecrj/setup-rust-action@v1
+    - uses: actions/checkout@master
+    - name: Enable static CRT linkage
+      run: |
+        mkdir .cargo
+        echo '[target.x86_64-pc-windows-msvc]' >> .cargo/config
+        echo 'rustflags = ["-Ctarget-feature=+crt-static"]' >> .cargo/config
+    - name: Build all binaries
+      run: cargo build --verbose --release --bins
+    - name: Archive course_list_generator binariy
+      uses: actions/upload-artifact@v1
+      with:
+        name: course_list_generator-x86_64-pc-windows-msvc
+        path: target/release/course_list_generator.exe
+
+  todos_macos:
+    runs-on: macOS-latest
+    steps:
+    - uses: hecrj/setup-rust-action@v1
+    - uses: actions/checkout@master
+    - name: Enable Link Time Optimizations
+      run: |
+        echo "[profile.release]" >> Cargo.toml
+        echo "lto = true" >> Cargo.toml
+    - name: Build todos binary
+      env:
+        MACOSX_DEPLOYMENT_TARGET: 10.14
+      run: cargo build --verbose --release --bins
+    - name: Archive course_list_generator binary
+      uses: actions/upload-artifact@v1
+      with:
+        name: course_list_generator-x86_64-apple-darwin
+        path: target/release/course_list_generator
