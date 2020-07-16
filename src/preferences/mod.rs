@@ -5,7 +5,7 @@ use ron::{de::from_reader, ser::to_writer};
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::Cow,
-    fs::File,
+    fs::{create_dir_all, File},
     io::{BufReader, BufWriter},
     path::{Path, PathBuf},
 };
@@ -65,6 +65,17 @@ pub fn load_preferences<'a>() -> Result<Preferences<'a>> {
 pub fn store_preferences(prefs: Preferences) -> Result<()> {
     let path = get_preferences_path().context("Could not get path to preference file")?;
 
+    let dir = path.parent().context("Preference file has no parent")?;
+    if !dir.exists() {
+        warn!(
+            "Preference directory does not exist. Creating {}",
+            dir.display()
+        );
+        create_dir_all(dir).context("Could not create directories for preferences")?;
+    }
+
     info!("Writing preferences to file (path: {})", path.display());
-    prefs.write(path).context("Could not store preferences")
+    prefs
+        .write(path.clone())
+        .with_context(|| format!("Could not store preferences (path: {})", path.display()))
 }

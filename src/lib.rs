@@ -2,7 +2,7 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use calamine::{DataType, Range};
-use log::{debug, info};
+use log::info;
 use std::{collections::HashMap, path::Path};
 
 pub mod preferences;
