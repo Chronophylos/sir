@@ -40,7 +40,7 @@ jobs:
         echo 'rustflags = ["-Ctarget-feature=+crt-static"]' >> .cargo/config
     - name: Build all binaries
       run: cargo build --verbose --release --bins
-    - name: Archive course_list_generator binariy
+    - name: Archive course_list_generator binary
       uses: actions/upload-artifact@v1
       with:
         name: course_list_generator-x86_64-pc-windows-msvc
