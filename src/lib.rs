@@ -84,7 +84,7 @@ pub fn read_course_list(
             name: data[2].to_string(),
             telephone: data[7].to_string(),
             email: data[10].to_string(),
-            price: show_price.then(|| data[column + 1].to_string()),
+            price: show_price.then(|| data[column + 8].to_string()),
         })
         .collect();
 

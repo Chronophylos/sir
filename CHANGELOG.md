@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 ### Added
 
 -   checkbox to show price in result
+-   id, group, name, telephone, email and price column
 
 ---
 
