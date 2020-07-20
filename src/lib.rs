@@ -14,6 +14,7 @@ pub struct CourseEntry {
     group: String,
     name: String,
     telephone: String,
+    email: String,
 }
 
 impl Ord for CourseEntry {
@@ -67,10 +68,11 @@ pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Ve
         .map(|data| {
             let group = data[column].get_string().unwrap().to_owned();
             CourseEntry {
+                id: data[0].to_string(),
                 group,
-                id: data[0].to_string().into(),
-                name: data[2].to_string().into(),
-                telephone: data[7].to_string().into(),
+                name: data[2].to_string(),
+                telephone: data[7].to_string(),
+                email: data[10].to_string(),
             }
         })
         .collect();
@@ -131,7 +133,7 @@ pub fn write_course_list(path: &str, table: Vec<CourseEntry>) -> Result<()> {
         .has_headers(false)
         .from_path(expanded)?;
 
-    wtr.write_record(&["Gruppe", "Kunden ID", "Name", "Telefon"])?;
+    wtr.write_record(&["Gruppe", "Kunden ID", "Name", "Telefon", "Email"])?;
 
     for entry in table {
         wtr.serialize(entry)
