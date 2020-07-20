@@ -89,7 +89,10 @@ impl Sandbox for Main {
     }
 
     fn title(&self) -> String {
-        String::from("SiR Course List Generator")
+        format!(
+            "SiR Course List Generator Version {}",
+            env!("CARGO_PKG_VERSION")
+        )
     }
 
     fn update(&mut self, message: Self::Message) {
