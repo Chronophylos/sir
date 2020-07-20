@@ -1,7 +1,7 @@
 use anyhow::Result;
 use iced::{
-    button, text_input, window, Align, Button, Column, Element, Length, Row, Sandbox, Settings,
-    Space, Text, TextInput,
+    button, text_input, window, Align, Button, Checkbox, Column, Element, Length, Row, Sandbox,
+    Settings, Space, Text, TextInput,
 };
 use log::info;
 use sir::preferences::{load_preferences, store_preferences, Preferences};
@@ -45,6 +45,8 @@ enum Message {
 
     GeneratePressed,
     BackPressed,
+
+    ShowPriceToggled(bool),
 }
 
 #[derive(Default)]
@@ -63,6 +65,8 @@ struct Main {
 
     generate_button: button::State,
     back_button: button::State,
+
+    show_price: bool,
 
     error_text: String,
     result_text: String,
@@ -111,6 +115,7 @@ impl Sandbox for Main {
 
                 let mut table = match sir::read_course_list(
                     &self.src_path_text,
+                    self.show_price,
                     &self.src_sheet_text,
                     &self.src_column_text,
                 ) {
@@ -146,6 +151,7 @@ impl Sandbox for Main {
                 State::Error | State::Result => self.state = State::Entry,
                 _ => {}
             },
+            Message::ShowPriceToggled(b) => self.show_price = b,
         }
     }
 
@@ -196,6 +202,17 @@ impl Sandbox for Main {
                             .padding(5)
                             .width(Length::Units(30)),
                         ),
+                )
+                .push(
+                    Row::new()
+                        .align_items(Align::Start)
+                        .padding(20)
+                        .spacing(10)
+                        .push(Checkbox::new(
+                            self.show_price,
+                            "Show Price",
+                            Message::ShowPriceToggled,
+                        )),
                 )
                 .push(
                     Row::new()

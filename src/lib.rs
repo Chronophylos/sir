@@ -1,4 +1,5 @@
 #![feature(or_patterns)]
+#![feature(bool_to_option)]
 
 use anyhow::{bail, ensure, Context, Result};
 use calamine::{DataType, Range};
@@ -10,11 +11,18 @@ pub mod preferences;
 
 #[derive(Debug, Serialize, Eq)]
 pub struct CourseEntry {
+    #[serde(rename = "Kundennummer")]
     id: String,
+    #[serde(rename = "Gruppe")]
     group: String,
+    #[serde(rename = "Name")]
     name: String,
+    #[serde(rename = "Telefon")]
     telephone: String,
+    #[serde(rename = "E-Mail")]
     email: String,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Preis")]
+    price: Option<String>,
 }
 
 impl Ord for CourseEntry {
@@ -35,7 +43,12 @@ impl PartialEq for CourseEntry {
     }
 }
 
-pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Vec<CourseEntry>> {
+pub fn read_course_list(
+    path: &str,
+    show_price: bool,
+    sheet_name: &str,
+    column: &str,
+) -> Result<Vec<CourseEntry>> {
     ensure!(!path.is_empty(), "Path is not set");
     ensure!(!sheet_name.is_empty(), "Sheet name is not set");
     ensure!(!column.is_empty(), "Column is no set");
@@ -65,15 +78,13 @@ pub fn read_course_list(path: &str, sheet_name: &str, column: &str) -> Result<Ve
         // filter out empty rows
         .filter(|data| data[column].is_string())
         // sort rows into hashmap
-        .map(|data| {
-            let group = data[column].get_string().unwrap().to_owned();
-            CourseEntry {
-                id: data[0].to_string(),
-                group,
-                name: data[2].to_string(),
-                telephone: data[7].to_string(),
-                email: data[10].to_string(),
-            }
+        .map(|data| CourseEntry {
+            id: data[0].to_string(),
+            group: data[column].to_string(),
+            name: data[2].to_string(),
+            telephone: data[7].to_string(),
+            email: data[10].to_string(),
+            price: show_price.then(|| data[column + 1].to_string()),
         })
         .collect();
 
@@ -129,11 +140,7 @@ pub fn write_course_list(path: &str, table: Vec<CourseEntry>) -> Result<()> {
 
     info!("Wrinting course list to {}", expanded);
 
-    let mut wtr = WriterBuilder::new()
-        .has_headers(false)
-        .from_path(expanded)?;
-
-    wtr.write_record(&["Gruppe", "Kunden ID", "Name", "Telefon", "Email"])?;
+    let mut wtr = WriterBuilder::new().has_headers(true).from_path(expanded)?;
 
     for entry in table {
         wtr.serialize(entry)
