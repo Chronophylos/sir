@@ -1,8 +1,8 @@
 use anyhow::Result;
 use flexi_logger::{detailed_format, Logger};
 use iced::{
-    button, text_input, window, Align, Button, Checkbox, Column, Element, Length, Row, Sandbox,
-    Settings, Space, Text, TextInput,
+    button, executor, text_input, window, Align, Application, Button, Checkbox, Column, Command,
+    Element, Length, Row, Settings, Space, Text, TextInput,
 };
 use log::info;
 use sir::{
@@ -83,18 +83,23 @@ struct Main {
     state: State,
 }
 
-impl Sandbox for Main {
+impl Application for Main {
     type Message = Message;
+    type Executor = executor::Default;
+    type Flags = ();
 
-    fn new() -> Self {
+    fn new(_flags: ()) -> (Self, Command<Self::Message>) {
         let prefs = load_preferences().unwrap();
-        Self {
-            src_path_text: prefs.src_path.to_string(),
-            src_sheet_text: prefs.src_sheet.to_string(),
-            src_column_text: prefs.src_column.to_string(),
-            dest_path_text: prefs.dest_path.to_string(),
-            ..Self::default()
-        }
+        (
+            Self {
+                src_path_text: prefs.src_path.to_string(),
+                src_sheet_text: prefs.src_sheet.to_string(),
+                src_column_text: prefs.src_column.to_string(),
+                dest_path_text: prefs.dest_path.to_string(),
+                ..Self::default()
+            },
+            Command::none(),
+        )
     }
 
     fn title(&self) -> String {
@@ -104,7 +109,7 @@ impl Sandbox for Main {
         )
     }
 
-    fn update(&mut self, message: Self::Message) {
+    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
             Message::SrcPathInputChanged(s) => self.src_path_text = s,
             Message::SrcSheetInputChanged(s) => self.src_sheet_text = s,
@@ -121,7 +126,7 @@ impl Sandbox for Main {
                     Err(err) => {
                         self.error_text = format!("Error storing preferences: {:?}", err);
                         self.state = State::Error;
-                        return;
+                        return Command::none();
                     }
                 }
 
@@ -135,7 +140,7 @@ impl Sandbox for Main {
                     Err(err) => {
                         self.error_text = format!("Error reading courses: {:?}", err);
                         self.state = State::Error;
-                        return;
+                        return Command::none();
                     }
                 };
 
@@ -148,7 +153,7 @@ impl Sandbox for Main {
                     Err(err) => {
                         self.error_text = format!("Error writing courses: {:?}", err);
                         self.state = State::Error;
-                        return;
+                        return Command::none();
                     }
                 }
 
@@ -164,7 +169,8 @@ impl Sandbox for Main {
                 _ => {}
             },
             Message::ShowPriceToggled(b) => self.show_price = b,
-        }
+        };
+        Command::none()
     }
 
     fn view(&mut self) -> Element<Self::Message> {
