@@ -29,14 +29,6 @@ jobs:
         with:
           name: sir-x86_64-debian-linux-gnu
           path: target/debian/sir-x86_64-debian-linux-gnu.deb
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   windows:
     runs-on: windows-latest
