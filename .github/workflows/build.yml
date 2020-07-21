@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - "v*"
 jobs:
   linux:
     runs-on: ubuntu-latest
