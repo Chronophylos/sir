@@ -1,6 +1,5 @@
 use crate::get_proj_dirs;
 use anyhow::{ensure, Context, Result};
-use directories::ProjectDirs;
 use log::{info, warn};
 use ron::{de::from_reader, ser::to_writer};
 use serde::{Deserialize, Serialize};
