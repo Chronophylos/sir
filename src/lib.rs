@@ -21,7 +21,7 @@ pub struct CourseEntry {
     telephone: String,
     #[serde(rename = "E-Mail")]
     email: String,
-    #[serde(skip_serializing_if = "Option::is_none", rename = "Preis")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Restbetrag")]
     price: Option<String>,
 }
 
