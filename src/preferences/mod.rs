@@ -1,3 +1,4 @@
+use crate::get_proj_dirs;
 use anyhow::{ensure, Context, Result};
 use directories::ProjectDirs;
 use log::{info, warn};
@@ -45,8 +46,7 @@ impl Preferences<'_> {
 }
 
 fn get_preferences_path() -> Result<PathBuf> {
-    let dirs =
-        ProjectDirs::from("com", "chronophylos", "sir").context("No valid home directory found")?;
+    let dirs = get_proj_dirs()?;
     Ok(dirs.config_dir().join("preferences.ron"))
 }
 

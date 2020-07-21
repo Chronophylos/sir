@@ -1,15 +1,24 @@
 use anyhow::Result;
+use flexi_logger::{detailed_format, Logger};
 use iced::{
     button, text_input, window, Align, Button, Checkbox, Column, Element, Length, Row, Sandbox,
     Settings, Space, Text, TextInput,
 };
 use log::info;
-use sir::preferences::{load_preferences, store_preferences, Preferences};
+use sir::{
+    get_proj_dirs,
+    preferences::{load_preferences, store_preferences, Preferences},
+};
 
 fn main() -> Result<()> {
-    env_logger::init();
+    let proj_dirs = get_proj_dirs()?;
+    Logger::with_env_or_str("course_list_generator=debug, sir=debug, info")
+        .log_to_file()
+        .directory(proj_dirs.data_dir().join("log"))
+        .format(detailed_format)
+        .start()?;
 
-    info!("Runnging main view");
+    info!("Running main view");
     Main::run(Settings {
         window: window::Settings {
             size: (900, 300),

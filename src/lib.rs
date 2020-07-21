@@ -3,6 +3,7 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use calamine::{DataType, Range};
+use directories::ProjectDirs;
 use log::info;
 use serde::Serialize;
 use std::{cmp::Ordering, path::Path};
@@ -168,6 +169,10 @@ fn column_to_usize(column: &str) -> Result<usize> {
         })
         // use zero indexing
         - 1)
+}
+
+pub fn get_proj_dirs() -> Result<ProjectDirs> {
+    ProjectDirs::from("com", "chronophylos", "sir").context("No valid home directory found")
 }
 
 #[cfg(test)]
