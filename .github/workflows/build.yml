@@ -77,9 +77,9 @@ jobs:
         working-directory: artifacts
       - name: Pack Artifacts
         run: |
-          zip sir-x86_64-apple-darwin.zip artifacts/course_list_generator-x86_64-apple-darwin/*
-          zip sir-x86_64-unknown-linux-gnu.zip artifacts/course_list_generator-x86_64-unknown-linux-gnu/*
-          zip sir-x86_64-pc-windows-msvc.zip artifacts/course_list_generator-x86_64-pc-windows-msvc/*
+          zip -j sir-x86_64-apple-darwin.zip artifacts/course_list_generator-x86_64-apple-darwin/*
+          zip -j sir-x86_64-unknown-linux-gnu.zip artifacts/course_list_generator-x86_64-unknown-linux-gnu/*
+          zip -j sir-x86_64-pc-windows-msvc.zip artifacts/course_list_generator-x86_64-pc-windows-msvc/*
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -88,6 +88,5 @@ jobs:
             sir-x86_64-apple-darwin.zip
             sir-x86_64-unknown-linux-gnu.zip
             sir-x86_64-pc-windows-msvc.zip
-          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
