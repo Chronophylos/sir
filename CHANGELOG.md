@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 
 ## [Unreleased][unreleased]
 
+### Changed
+
+-   Course List Generator: Made storing and loading of preferences async
+-   Course List Generator: Added authors to title
+
 ---
 
 ## [0.1.0] - 2020-07-21
