@@ -12,7 +12,6 @@ use sir::{
     get_proj_dirs,
     preferences::{load_preferences, store_preferences, Preferences},
 };
-use std::marker::PhantomData;
 
 fn main() -> Result<()> {
     let proj_dirs = get_proj_dirs()?;
@@ -49,7 +48,7 @@ impl Default for State {
 }
 
 #[derive(Debug, Clone)]
-enum Message<'a> {
+enum Message {
     Nothing,
 
     SrcPathInputChanged(String),
@@ -64,11 +63,12 @@ enum Message<'a> {
     ShowPriceToggled(bool),
 
     //GenerateCourseList,
-    LoadPreferences(Preferences<'a>),
+    LoadPreferences(Preferences),
+    StorePreferences(Result<(), String>),
 }
 
 #[derive(Default)]
-struct Main<'a> {
+struct Main {
     src_path_input: text_input::State,
     src_path_text: String,
 
@@ -90,12 +90,10 @@ struct Main<'a> {
     result_text: String,
 
     state: State,
-
-    phantom: PhantomData<&'a !>,
 }
 
-impl<'a> Application for Main<'a> {
-    type Message = Message<'a>;
+impl Application for Main {
+    type Message = Message;
     type Executor = executor::Default;
     type Flags = ();
 
@@ -127,20 +125,6 @@ impl<'a> Application for Main<'a> {
             Message::SrcColumnInputChanged(s) => self.src_column_text = s,
             Message::DestPathInputChanged(s) => self.dest_path_text = s,
             Message::GeneratePressed => {
-                match store_preferences(Preferences {
-                    src_path: self.src_path_text.as_str().into(),
-                    src_sheet: self.src_sheet_text.as_str().into(),
-                    src_column: self.src_column_text.as_str().into(),
-                    dest_path: self.dest_path_text.as_str().into(),
-                }) {
-                    Ok(_) => {}
-                    Err(err) => {
-                        self.error_text = format!("Error storing preferences: {:?}", err);
-                        self.state = State::Error;
-                        return Command::none();
-                    }
-                }
-
                 let mut table = match sir::read_course_list(
                     &self.src_path_text,
                     self.show_price,
@@ -174,6 +158,16 @@ impl<'a> Application for Main<'a> {
                 );
 
                 self.state = State::Result;
+
+                return Command::perform(
+                    store_preferences(Preferences {
+                        src_path: self.src_path_text.as_str().into(),
+                        src_sheet: self.src_sheet_text.as_str().into(),
+                        src_column: self.src_column_text.as_str().into(),
+                        dest_path: self.dest_path_text.as_str().into(),
+                    }),
+                    |result| Message::StorePreferences(result.map_err(|err| format!("{}", err))),
+                );
             }
             Message::BackPressed => match self.state {
                 State::Error | State::Result => self.state = State::Entry,
@@ -185,6 +179,11 @@ impl<'a> Application for Main<'a> {
                 self.src_sheet_text = prefs.src_sheet.to_string();
                 self.src_column_text = prefs.src_column.to_string();
                 self.dest_path_text = prefs.dest_path.to_string();
+            }
+            Message::StorePreferences(result) => {
+                if let Err(err) = result {
+                    error!("Error storing preferences: {}", err)
+                }
             }
         };
         Command::none()

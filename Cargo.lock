@@ -2039,6 +2039,7 @@ dependencies = [
  "ron",
  "serde",
  "shellexpand",
+ "thiserror",
 ]
 
 [[package]]
