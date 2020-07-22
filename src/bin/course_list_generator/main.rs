@@ -144,13 +144,10 @@ impl Application for Main {
 
                 let participants = table.len();
 
-                match sir::write_course_list(&self.dest_path_text, table) {
-                    Ok(_) => {}
-                    Err(err) => {
-                        self.error_text = format!("Error writing courses: {:?}", err);
-                        self.state = State::Error;
-                        return Command::none();
-                    }
+                if let Err(err) = sir::write_course_list(&self.dest_path_text, table) {
+                    self.error_text = format!("Error writing courses: {:?}", err);
+                    self.state = State::Error;
+                    return Command::none();
                 }
 
                 self.result_text = format!(
