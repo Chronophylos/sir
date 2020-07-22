@@ -1,14 +1,18 @@
+#![feature(never_type)]
+#![feature(async_closure)]
+
 use anyhow::Result;
 use flexi_logger::{detailed_format, Logger};
 use iced::{
     button, executor, text_input, window, Align, Application, Button, Checkbox, Column, Command,
     Element, Length, Row, Settings, Space, Text, TextInput,
 };
-use log::info;
+use log::{error, info};
 use sir::{
     get_proj_dirs,
     preferences::{load_preferences, store_preferences, Preferences},
 };
+use std::marker::PhantomData;
 
 fn main() -> Result<()> {
     let proj_dirs = get_proj_dirs()?;
@@ -45,7 +49,9 @@ impl Default for State {
 }
 
 #[derive(Debug, Clone)]
-enum Message {
+enum Message<'a> {
+    Nothing,
+
     SrcPathInputChanged(String),
     SrcSheetInputChanged(String),
     SrcColumnInputChanged(String),
@@ -56,10 +62,13 @@ enum Message {
     BackPressed,
 
     ShowPriceToggled(bool),
+
+    //GenerateCourseList,
+    LoadPreferences(Preferences<'a>),
 }
 
 #[derive(Default)]
-struct Main {
+struct Main<'a> {
     src_path_input: text_input::State,
     src_path_text: String,
 
@@ -81,24 +90,25 @@ struct Main {
     result_text: String,
 
     state: State,
+
+    phantom: PhantomData<&'a !>,
 }
 
-impl Application for Main {
-    type Message = Message;
+impl<'a> Application for Main<'a> {
+    type Message = Message<'a>;
     type Executor = executor::Default;
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-        let prefs = load_preferences().unwrap();
         (
-            Self {
-                src_path_text: prefs.src_path.to_string(),
-                src_sheet_text: prefs.src_sheet.to_string(),
-                src_column_text: prefs.src_column.to_string(),
-                dest_path_text: prefs.dest_path.to_string(),
-                ..Self::default()
-            },
-            Command::none(),
+            Self::default(),
+            Command::perform(load_preferences(), |prefs| match prefs {
+                Ok(prefs) => Message::LoadPreferences(prefs),
+                Err(err) => {
+                    error!("Could not load preferences: {}", err);
+                    Message::Nothing
+                }
+            }),
         )
     }
 
@@ -111,6 +121,7 @@ impl Application for Main {
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
+            Message::Nothing => {}
             Message::SrcPathInputChanged(s) => self.src_path_text = s,
             Message::SrcSheetInputChanged(s) => self.src_sheet_text = s,
             Message::SrcColumnInputChanged(s) => self.src_column_text = s,
@@ -169,6 +180,12 @@ impl Application for Main {
                 _ => {}
             },
             Message::ShowPriceToggled(b) => self.show_price = b,
+            Message::LoadPreferences(prefs) => {
+                self.src_path_text = prefs.src_path.to_string();
+                self.src_sheet_text = prefs.src_sheet.to_string();
+                self.src_column_text = prefs.src_column.to_string();
+                self.dest_path_text = prefs.dest_path.to_string();
+            }
         };
         Command::none()
     }

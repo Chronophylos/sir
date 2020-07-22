@@ -49,9 +49,9 @@ fn get_preferences_path() -> Result<PathBuf> {
     Ok(dirs.config_dir().join("preferences.ron"))
 }
 
-pub fn load_preferences<'a>() -> Result<Preferences<'a>> {
+pub async fn load_preferences<'a>() -> Result<Preferences<'a>> {
     let path = get_preferences_path().context("Could not get path to preference file")?;
-    info!("Loading preferences from file (path: {})", path.display());
+    info!("Loading preferences from `{}`", path.display());
 
     if !path.exists() {
         warn!("Using default values since preference file does not exist");
@@ -73,7 +73,7 @@ pub fn store_preferences(prefs: Preferences) -> Result<()> {
         create_dir_all(dir).context("Could not create directories for preferences")?;
     }
 
-    info!("Writing preferences to file (path: {})", path.display());
+    info!("Writing preferences to `{}`", path.display());
     prefs
         .write(path.clone())
         .with_context(|| format!("Could not store preferences (path: {})", path.display()))
