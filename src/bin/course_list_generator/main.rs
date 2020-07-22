@@ -112,8 +112,9 @@ impl Application for Main {
 
     fn title(&self) -> String {
         format!(
-            "SiR Course List Generator Version {}",
-            env!("CARGO_PKG_VERSION")
+            "SiR Course List Generator Version {} by {}",
+            env!("CARGO_PKG_VERSION"),
+            env!("CARGO_PKG_AUTHORS")
         )
     }
 
