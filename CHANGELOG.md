@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 
 -   Course List Generator: Made storing and loading of preferences async
 -   Course List Generator: Added authors to title
+-   Course List Generator: Changed Output Type to XLSX
 
 ---
 

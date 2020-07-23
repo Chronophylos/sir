@@ -1,7 +1,9 @@
 #![feature(never_type)]
 #![feature(async_closure)]
+#![feature(bool_to_option)]
 
-use anyhow::Result;
+use anyhow::{Error, Result};
+use course_list::{CourseList, CourseListOptions};
 use flexi_logger::{detailed_format, Logger};
 use iced::{
     button, executor, text_input, window, Align, Application, Button, Checkbox, Column, Command,
@@ -11,7 +13,10 @@ use log::{error, info};
 use sir::{
     get_proj_dirs,
     preferences::{load_preferences, store_preferences, Preferences},
+    workbook::WorkbookManager,
 };
+
+mod course_list;
 
 fn main() -> Result<()> {
     let proj_dirs = get_proj_dirs()?;
@@ -90,6 +95,8 @@ struct Main {
     result_text: String,
 
     state: State,
+
+    workbook_manager: WorkbookManager,
 }
 
 impl Application for Main {
@@ -126,34 +133,54 @@ impl Application for Main {
             Message::SrcColumnInputChanged(s) => self.src_column_text = s,
             Message::DestPathInputChanged(s) => self.dest_path_text = s,
             Message::GeneratePressed => {
-                let mut table = match sir::read_course_list(
-                    &self.src_path_text,
-                    self.show_price,
+                if let Err(err) = self.workbook_manager.open(&self.src_path_text) {
+                    let err = Error::new(err);
+                    self.error_text = format!("Could not open spreadsheet file: {:?}", err);
+                    error!(
+                        "Error opening workbook manager (path: {}): {:?}",
+                        self.src_path_text, err
+                    );
+                    self.state = State::Error;
+                    return Command::none();
+                }
+
+                let options = &CourseListOptions {
+                    show_price: self.show_price,
+                };
+
+                let mut list = match self.workbook_manager.read_course_list(
                     &self.src_sheet_text,
                     &self.src_column_text,
+                    options,
                 ) {
-                    Ok(table) => table,
+                    Ok(l) => l,
                     Err(err) => {
-                        self.error_text = format!("Error reading courses: {:?}", err);
+                        self.error_text = format!("Could not read course list: {:#?}", err);
+                        error!("Error reading course list: {:#?}", err);
                         self.state = State::Error;
                         return Command::none();
                     }
                 };
 
-                table.sort();
+                list.sort();
 
-                let participants = table.len();
+                self.result_text = format!(
+                    "Successfully wrote data of {} participants to {}",
+                    list.len(),
+                    self.dest_path_text
+                );
 
-                if let Err(err) = sir::write_course_list(&self.dest_path_text, table) {
-                    self.error_text = format!("Error writing courses: {:?}", err);
+                if let Err(err) =
+                    WorkbookManager::write_course_list(&self.dest_path_text, list, options)
+                {
+                    self.error_text = format!("Could not write course list: {:#?}", err);
+                    error!(
+                        "Error writing course list (path: {}): {:#?}",
+                        self.dest_path_text, err
+                    );
                     self.state = State::Error;
                     return Command::none();
                 }
-
-                self.result_text = format!(
-                    "Found {} participants. Wrote result to {}",
-                    participants, &self.dest_path_text
-                );
 
                 self.state = State::Result;
 
@@ -180,7 +207,7 @@ impl Application for Main {
             }
             Message::StorePreferences(result) => {
                 if let Err(err) = result {
-                    error!("Error storing preferences: {}", err)
+                    error!("Could not store preferences: {}", err)
                 }
             }
         };
