@@ -13,6 +13,7 @@ use log::{error, info};
 use sir::{
     get_proj_dirs,
     preferences::{load_preferences, store_preferences, Preferences},
+    update,
     workbook::WorkbookManager,
 };
 
@@ -26,7 +27,9 @@ fn main() -> Result<()> {
         .format(detailed_format)
         .start()?;
 
-    info!("Running main view");
+    update("course_list_generator")?;
+
+    info!("Starting window");
     Main::run(Settings {
         window: window::Settings {
             size: (900, 300),

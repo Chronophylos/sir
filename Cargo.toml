@@ -24,3 +24,13 @@ ron = "0.6.0"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1.0"
 xlsxwriter = "0.3"
+
+[dependencies.self_update]
+version = "0.20"
+features = [
+    "archive-tar",
+    "archive-zip",
+    "compression-flate2",
+    "compression-zip-bzip2",
+    "rustls",
+]

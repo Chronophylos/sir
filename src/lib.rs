@@ -4,6 +4,8 @@
 
 use anyhow::{ensure, Context, Result};
 use directories::ProjectDirs;
+use log::info;
+use self_update::cargo_crate_version;
 
 pub mod preferences;
 pub mod workbook;
@@ -28,6 +30,33 @@ pub fn column_to_usize(column: &str) -> Result<usize> {
 
 pub fn get_proj_dirs() -> Result<ProjectDirs> {
     ProjectDirs::from("com", "chronophylos", "sir").context("No valid home directory found")
+}
+
+pub fn update(bin_name: &str) -> Result<()> {
+    use self_update::Status::*;
+
+    if cfg!(debug_assertions) {
+        info!("Running as dev: Skipping update check");
+        return Ok(());
+    } else {
+        info!("Checking for update");
+    }
+
+    let status = self_update::backends::github::Update::configure()
+        .repo_owner("Chronophylos")
+        .repo_name("sir")
+        .bin_name(bin_name)
+        .show_download_progress(true)
+        .current_version(cargo_crate_version!())
+        .build()?
+        .update()?;
+
+    match status {
+        UpToDate(_) => info!("{} is up to date", bin_name),
+        Updated(version) => info!("Updated {} to {}", bin_name, version),
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
