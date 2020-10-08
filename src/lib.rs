@@ -46,7 +46,8 @@ pub fn update(bin_name: &str) -> Result<()> {
         .repo_owner("Chronophylos")
         .repo_name("sir")
         .bin_name(bin_name)
-        .show_download_progress(true)
+        .show_output(false)
+        .no_confirm(true)
         .current_version(cargo_crate_version!())
         .build()?
         .update()?;
