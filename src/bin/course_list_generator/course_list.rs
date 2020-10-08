@@ -193,7 +193,7 @@ trait CourseListWriter {
     ) -> Result<(), CourseListError>;
 }
 
-const HEADERS: &[&str; 6] = &[
+const HEADERS: [&'static str; 6] = [
     "Kundennummer",
     "Gruppe",
     "Name",
