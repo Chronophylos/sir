@@ -1,26 +1,26 @@
 cargo-features = ["strip"]
 
 [package]
-name        = "sir"
-version     = "0.1.0"
-authors     = ["Chronophylos <nikolai@chronophylos.com>"]
-edition     = "2018"
+name = "sir"
+version = "0.1.0"
+authors = ["Chronophylos <nikolai@chronophylos.com>"]
+edition = "2018"
 description = "A Suite of Tools for Schimmen-Im-Ried.de"
 
 [profile.release]
-codegen-units = 1
-lto           = true
-opt-level     = 'z'  # Optimize for size.
-strip         = "debuginfo"
+codegen-units = 1 
+lto = true 
+opt-level = 'z' # Optimize for size.
+strip = "debuginfo" 
 
 [dependencies]
-anyhow       = "1.0"
-calamine     = "0.16.1"
-directories  = "3.0"
-flexi_logger = "0.15.8"
-iced         = "0.1"
-log          = "0.4"
-ron          = "0.6.0"
-serde        = { version = "1", features = ["derive"] }
-thiserror    = "1.0"
-xlsxwriter   = "0.3.1"
+anyhow = "1.0"
+calamine = "0.16"
+directories = "3.0"
+flexi_logger = "0.16"
+iced = "0.1"
+log = "0.4"
+ron = "0.6.0"
+serde = { version = "1", features = ["derive"] }
+thiserror = "1.0"
+xlsxwriter = "0.3"
