@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 
 ## [Unreleased][unreleased]
 
+### Fixed
+
+#### Course List Generator
+
+-   Hide cmd.exe on windows
+
 ## [0.2.0] - 2020-10-09
 
 ### Added

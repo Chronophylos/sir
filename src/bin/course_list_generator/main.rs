@@ -4,7 +4,7 @@
 
 use anyhow::{Error, Result};
 use course_list::{CourseList, CourseListOptions};
-use flexi_logger::{detailed_format, Logger};
+use flexi_logger::{colored_detailed_format, detailed_format, Logger};
 use iced::{
     button, executor, text_input, window, Align, Application, Button, Column, Command, Element,
     Length, Row, Settings, Space, Text, TextInput,
@@ -25,13 +25,13 @@ fn main() -> Result<()> {
     if cfg!(debug_assertions) {
         Logger::with_env_or_str("course_list_generator=debug, sir=debug, info")
             .duplicate_to_stderr(flexi_logger::Duplicate::Info)
+            .format(colored_detailed_format)
     } else {
         Logger::with_str("info")
+            .log_to_file()
+            .directory(proj_dirs.data_dir().join("log"))
+            .format(detailed_format)
     }
-    .log_to_file()
-    .print_message()
-    .directory(proj_dirs.data_dir().join("log"))
-    .format(detailed_format)
     .start()?;
 
     update("course_list_generator")?;
