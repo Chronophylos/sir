@@ -1,6 +1,7 @@
 #![feature(never_type)]
 #![feature(async_closure)]
 #![feature(bool_to_option)]
+#![windows_subsystem = "windows"]
 
 use anyhow::{Error, Result};
 use course_list::{CourseList, CourseListOptions};
