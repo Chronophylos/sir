@@ -36,7 +36,9 @@ fn main() -> Result<()> {
     }
     .start()?;
 
-    update("course_list_generator")?;
+    if let Err(err) = update("course_list_generator") {
+        error!("Could not update application: {}", err);
+    }
 
     info!("Starting window");
     Main::run(Settings {
