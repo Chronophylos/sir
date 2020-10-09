@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 
 ## [Unreleased][unreleased]
 
+## [0.2.2] - 2020-10-09
+
+### Fixed
+
+#### Course List Generator
+
+-   Crash when update is available but the target binary is not yet built
+
+## [0.2.1] - 2020-10-09
+
 ### Fixed
 
 #### Course List Generator
