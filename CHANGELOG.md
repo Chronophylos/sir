@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 
 ## [Unreleased][unreleased]
 
+## [0.2.0] - 2020-10-09
+
 ### Added
 
 #### Course List Generator
