@@ -45,7 +45,7 @@ pub struct CourseEntry {
     name: String,
     telephone: String,
     email: String,
-    price: Option<f64>,
+    auxiliaries: Vec<String>,
 }
 
 impl Eq for CourseEntry {}
@@ -71,6 +71,7 @@ impl PartialEq for CourseEntry {
 #[derive(Debug, Default)]
 pub struct CourseListOptions {
     pub show_price: bool,
+    pub auxiliaries: Vec<(String, String)>,
 }
 
 pub trait CourseList<R>
@@ -104,10 +105,15 @@ where
                     name: data[2].to_string(),
                     telephone: data[7].to_string().replace("\r\n", ";"),
                     email: data[11].to_string(),
-                    price: options
-                        .show_price
-                        .then(|| data[column + 8].to_string().parse())
-                        .transpose()?,
+                    auxiliaries: options
+                        .auxiliaries
+                        .iter()
+                        .filter_map(|(_, column)| {
+                            column_to_usize(column)
+                                .ok()
+                                .map(|column| data[column].to_string())
+                        })
+                        .collect(),
                 })
             })
             .collect::<Result<Vec<CourseEntry>, Box<dyn Error>>>()
@@ -129,9 +135,11 @@ where
             .set_border_bottom(FormatBorder::Medium)
             .set_bold();
 
+        /*
         let currency_format = workbook
             .add_format()
             .set_num_format("#,##0.00 €;-#,##0.00 €");
+        */
 
         let id_format = workbook.add_format().set_align(FormatAlignment::Center);
 
@@ -155,7 +163,7 @@ where
             .set_column(4, 4, 30., None)
             .map_err(|err| CourseListError::SetColumn(err))?;
         sheet
-            .set_column(5, 5, 10., Some(&currency_format))
+            .set_column(5, 6, 30., None)
             .map_err(|err| CourseListError::SetColumn(err))?;
 
         sheet.write_header(0, 0, &options, Some(&header_format))?;
@@ -193,14 +201,7 @@ trait CourseListWriter {
     ) -> Result<(), CourseListError>;
 }
 
-const HEADERS: [&'static str; 6] = [
-    "Kundennummer",
-    "Gruppe",
-    "Name",
-    "Telefon",
-    "E-Mail",
-    "Restbetrag",
-];
+const HEADERS: [&'static str; 5] = ["Kundennummer", "Gruppe", "Name", "Telefon", "E-Mail"];
 
 impl CourseListWriter for Worksheet<'_> {
     fn write_header(
@@ -212,14 +213,12 @@ impl CourseListWriter for Worksheet<'_> {
     ) -> Result<(), CourseListError> {
         HEADERS
             .iter()
+            .map(|&h| h)
+            .chain(options.auxiliaries.iter().map(|(name, _)| name.as_str()))
             .enumerate()
-            .map(|(i, &header)| {
-                if i == 5 && !options.show_price {
-                    Ok(())
-                } else {
-                    self.write_string(row, col + i as u16, header, format)
-                        .map_err(|err| CourseListError::WriteHeaderRow(err))
-                }
+            .map(|(i, header)| {
+                self.write_string(row, col + i as u16, header, format)
+                    .map_err(|err| CourseListError::WriteHeaderRow(err))
             })
             .collect()
     }
@@ -229,7 +228,7 @@ impl CourseListWriter for Worksheet<'_> {
         row: u32,
         col: u16,
         entries: Vec<CourseEntry>,
-        options: &CourseListOptions,
+        _options: &CourseListOptions,
     ) -> Result<(), CourseListError> {
         entries
             .iter()
@@ -258,10 +257,10 @@ impl CourseListWriter for Worksheet<'_> {
                     .map_err(|err| CourseListError::WriteEntryRow(err))?;
                 col += 1;
 
-                if options.show_price {
-                    self.write_number(row, col, entry.price.unwrap_or(0.0), None)
+                for text in &entry.auxiliaries {
+                    self.write_string(row, col, text, None)
                         .map_err(|err| CourseListError::WriteEntryRow(err))?;
-                    //col += 1;
+                    col += 1;
                 }
 
                 Ok(())

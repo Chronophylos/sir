@@ -30,6 +30,8 @@ pub struct Preferences {
     pub src_sheet: String,
     pub src_column: String,
     pub dest_path: String,
+    #[serde(default)]
+    pub auxiliaries: Option<Vec<(String, String)>>,
 }
 
 impl Preferences {
