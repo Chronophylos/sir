@@ -31,6 +31,7 @@ fn main() -> Result<()> {
         Logger::with_str("info")
             .log_to_file()
             .directory(proj_dirs.data_dir().join("log"))
+            .print_message()
             .format(detailed_format)
     }
     .start()?;
