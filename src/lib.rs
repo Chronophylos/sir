@@ -5,7 +5,8 @@
 use anyhow::{ensure, Context, Result};
 use directories::ProjectDirs;
 use log::info;
-use self_update::cargo_crate_version;
+use self_update::{cargo_crate_version, Status::*};
+use std::process::{exit, Command};
 
 pub mod preferences;
 pub mod workbook;
@@ -33,8 +34,6 @@ pub fn get_proj_dirs() -> Result<ProjectDirs> {
 }
 
 pub fn update(bin_name: &str) -> Result<()> {
-    use self_update::Status::*;
-
     if cfg!(debug_assertions) {
         info!("Running as dev: Skipping update check");
         return Ok(());
@@ -54,7 +53,19 @@ pub fn update(bin_name: &str) -> Result<()> {
 
     match status {
         UpToDate(_) => info!("{} is up to date", bin_name),
-        Updated(version) => info!("Updated {} to {}", bin_name, version),
+        Updated(version) => {
+            info!("Updated {} to {}", bin_name, version);
+
+            let mut args = std::env::args();
+
+            let code = Command::new(args.next().unwrap()).spawn()?.wait()?;
+
+            if code.success() == false {
+                exit(code.code().unwrap_or(1));
+            } else {
+                exit(0);
+            }
+        }
     }
 
     Ok(())
