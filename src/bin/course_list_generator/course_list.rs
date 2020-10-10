@@ -1,9 +1,9 @@
 use calamine::{DataType, Range, Reader, Sheets};
 use sir::{
-    column_to_usize,
     workbook::{WorkbookError, WorkbookManager},
+    Column,
 };
-use std::{cmp::Ordering, error::Error};
+use std::{cmp::Ordering, convert::TryInto, error::Error, num::TryFromIntError};
 use thiserror::Error;
 use xlsxwriter::{Format, FormatAlignment, FormatBorder, Workbook, Worksheet, XlsxError};
 
@@ -20,6 +20,13 @@ pub enum CourseListError {
         #[from]
         #[source]
         WorkbookError,
+    ),
+
+    #[error("Workbook Error: {0}")]
+    ConversionError(
+        #[from]
+        #[source]
+        TryFromIntError,
     ),
 
     #[error("Could not add a new worksheet to workbook: {0}")]
@@ -87,7 +94,10 @@ where
         column: &str,
         options: &CourseListOptions,
     ) -> Result<Vec<CourseEntry>, CourseListError> {
-        let column = column_to_usize(column).map_err(|err| CourseListError::ConvertColumn(err))?;
+        let column: usize = column
+            .try_into_index()
+            .map_err(|err| CourseListError::ConvertColumn(err))?
+            .try_into()?;
 
         let range = self.get_sheet(sheet).ok_or(CourseListError::NoReader)??;
 
@@ -109,9 +119,12 @@ where
                         .auxiliaries
                         .iter()
                         .filter_map(|(_, column)| {
-                            column_to_usize(column)
+                            column
+                                .try_into_index()
+                                .map(|col| col.try_into().ok())
                                 .ok()
-                                .map(|column| data[column].to_string())
+                                .flatten()
+                                .map(|column: usize| data[column].to_string())
                         })
                         .collect(),
                 })

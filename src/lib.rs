@@ -11,22 +11,28 @@ use std::process::{exit, Command};
 pub mod preferences;
 pub mod workbook;
 
-pub fn column_to_usize(column: &str) -> Result<usize> {
-    let column = column.to_owned();
+pub trait Column {
+    fn try_into_index(&self) -> Result<u32>;
+}
 
-    ensure!(!column.is_empty(), "Column is empty");
+impl Column for &str {
+    fn try_into_index(&self) -> Result<u32> {
+        ensure!(!self.is_empty(), "Column is empty");
 
-    Ok(column
-        .to_uppercase()
-        .chars()
-        .filter(|c| c.is_ascii_alphabetic())
-        // convert to a number but ignore actual numbers
-        .map(|c| c.to_digit(36).unwrap() - 9)
-        .fold(0, |acc, x| {
-            acc * 26 + x as usize
-        })
-        // use zero indexing
-        - 1)
+        let index = self
+            .chars()
+            .filter(char::is_ascii_alphabetic)
+            .map(|c| c.to_digit(36).expect("char is expected to be alphabetic"))
+            .fold(0u32, |acc, x| acc * 26 + x - 9);
+
+        Ok(index - 1)
+    }
+}
+
+impl Column for String {
+    fn try_into_index(&self) -> Result<u32> {
+        self.as_str().try_into_index()
+    }
 }
 
 pub fn get_proj_dirs() -> Result<ProjectDirs> {
@@ -76,9 +82,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_column_to_usize() {
-        assert_eq!(column_to_usize("W").unwrap(), 22);
-        assert_eq!(column_to_usize("AA").unwrap(), 26);
-        assert_eq!(column_to_usize("CY").unwrap(), 102);
+    fn column() {
+        assert!("".try_into_index().is_err());
+        assert_eq!("W".try_into_index().unwrap(), 22);
+        assert_eq!("AA".try_into_index().unwrap(), 26);
+        assert_eq!("CY".try_into_index().unwrap(), 102);
     }
 }
