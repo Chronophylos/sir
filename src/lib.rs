@@ -6,31 +6,35 @@ use anyhow::{ensure, Context, Result};
 use directories::ProjectDirs;
 use log::info;
 use self_update::{cargo_crate_version, Status::*};
-use std::process::{exit, Command};
+use std::{
+    convert::TryInto,
+    process::{exit, Command},
+};
 
 pub mod preferences;
 pub mod workbook;
 
 pub trait Column {
-    fn try_into_index(&self) -> Result<u32>;
+    fn try_into_index(&self) -> Result<usize>;
 }
 
 impl Column for &str {
-    fn try_into_index(&self) -> Result<u32> {
+    fn try_into_index(&self) -> Result<usize> {
         ensure!(!self.is_empty(), "Column is empty");
 
         let index = self
             .chars()
             .filter(char::is_ascii_alphabetic)
             .map(|c| c.to_digit(36).expect("char is expected to be alphabetic"))
-            .fold(0u32, |acc, x| acc * 26 + x - 9);
+            .fold(0u32, |acc, x| acc * 26 + x - 9)
+            - 1;
 
-        Ok(index - 1)
+        index.try_into().context("Could not convert to usize")
     }
 }
 
 impl Column for String {
-    fn try_into_index(&self) -> Result<u32> {
+    fn try_into_index(&self) -> Result<usize> {
         self.as_str().try_into_index()
     }
 }

@@ -96,8 +96,7 @@ where
     ) -> Result<Vec<CourseEntry>, CourseListError> {
         let column: usize = column
             .try_into_index()
-            .map_err(|err| CourseListError::ConvertColumn(err))?
-            .try_into()?;
+            .map_err(|err| CourseListError::ConvertColumn(err))?;
 
         let range = self.get_sheet(sheet).ok_or(CourseListError::NoReader)??;
 
@@ -121,10 +120,8 @@ where
                         .filter_map(|(_, column)| {
                             column
                                 .try_into_index()
-                                .map(|col| col.try_into().ok())
                                 .ok()
-                                .flatten()
-                                .map(|column: usize| data[column].to_string())
+                                .map(|column| data[column].to_string())
                         })
                         .collect(),
                 })
