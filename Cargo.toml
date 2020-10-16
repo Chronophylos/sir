@@ -2,7 +2,7 @@ cargo-features = ["strip"]
 
 [package]
 name = "sir"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Chronophylos <nikolai@chronophylos.com>"]
 edition = "2018"
 description = "A Suite of Tools for Schimmen-Im-Ried.de"
