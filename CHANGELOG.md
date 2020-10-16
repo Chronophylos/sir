@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog][keep a changelog] and this project adh
 
 ## [Unreleased][unreleased]
 
+### Changed
+
+#### Course List Generator
+
+-   Set additional column count from 2 to 4
+
 ## [0.2.2] - 2020-10-09
 
 ### Fixed

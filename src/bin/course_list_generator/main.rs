@@ -117,7 +117,7 @@ struct Main {
     workbook_manager: WorkbookManager,
 }
 
-const AUXILIARIES: usize = 2;
+const AUXILIARIES: usize = 4;
 
 impl Application for Main {
     type Message = Message;

@@ -3,7 +3,7 @@ use sir::{
     workbook::{WorkbookError, WorkbookManager},
     Column,
 };
-use std::{cmp::Ordering, convert::TryInto, error::Error, num::TryFromIntError};
+use std::{cmp::Ordering, error::Error, num::TryFromIntError};
 use thiserror::Error;
 use xlsxwriter::{Format, FormatAlignment, FormatBorder, Workbook, Worksheet, XlsxError};
 
